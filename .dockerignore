@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Data (will be mounted as volume)
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Documentation
+README.md
+*.md
+LICENSE
+
+# Build artifacts
+*.tar.gz
+build/
+dist/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Scripts
+build-arm64.sh
+start.sh
+Makefile
+Makefile.docker
+
+# Diagrams and plans
+*.puml
+*.png
+out/
+wiring-diagram.md
+example-usage.txt
+
+
+

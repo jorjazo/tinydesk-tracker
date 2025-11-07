@@ -1,0 +1,98 @@
+# Makefile for Docker operations
+# Tiny Desk Tracker - Raspberry Pi Edition
+
+.PHONY: help build build-arm64 build-multi run stop clean push save load
+
+# Configuration
+IMAGE_NAME := tinydesk-tracker
+IMAGE_TAG := latest
+REGISTRY := # Set this if you want to push to a registry (e.g., yourname/tinydesk-tracker)
+
+help:
+	@echo "Tiny Desk Tracker - Docker Commands"
+	@echo ""
+	@echo "Usage:"
+	@echo "  make build           - Build for current architecture"
+	@echo "  make build-arm64     - Build for ARM64 (Raspberry Pi)"
+	@echo "  make build-multi     - Build for both AMD64 and ARM64"
+	@echo "  make run             - Run with docker-compose"
+	@echo "  make stop            - Stop docker-compose"
+	@echo "  make clean           - Remove containers and images"
+	@echo "  make save            - Save ARM64 image to file"
+	@echo "  make load            - Load image from file"
+	@echo "  make push            - Push to registry (requires REGISTRY)"
+	@echo ""
+
+build:
+	@echo "Building Docker image for current architecture..."
+	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
+
+build-arm64:
+	@echo "Building Docker image for ARM64 (Raspberry Pi)..."
+	chmod +x build-arm64.sh
+	./build-arm64.sh
+
+build-multi:
+	@echo "Building multi-architecture Docker image..."
+	docker buildx build \
+		--platform linux/amd64,linux/arm64 \
+		--tag $(IMAGE_NAME):$(IMAGE_TAG) \
+		--load \
+		.
+
+run:
+	@echo "Starting Tiny Desk Tracker with docker-compose..."
+	docker-compose up -d
+	@echo ""
+	@echo "✓ Tracker is running!"
+	@echo "  Web Interface: http://localhost:5000"
+	@echo "  Dashboard: http://localhost:5000/dashboard"
+	@echo ""
+	@echo "View logs: docker-compose logs -f"
+
+stop:
+	@echo "Stopping Tiny Desk Tracker..."
+	docker-compose down
+
+clean: stop
+	@echo "Cleaning up Docker resources..."
+	docker-compose down -v
+	docker rmi $(IMAGE_NAME):$(IMAGE_TAG) 2>/dev/null || true
+	@echo "✓ Cleanup complete"
+
+save:
+	@echo "Saving ARM64 image to file..."
+	docker save $(IMAGE_NAME):$(IMAGE_TAG) | gzip > $(IMAGE_NAME)-arm64.tar.gz
+	@echo "✓ Saved to $(IMAGE_NAME)-arm64.tar.gz"
+	@ls -lh $(IMAGE_NAME)-arm64.tar.gz
+
+load:
+	@echo "Loading image from file..."
+	@if [ ! -f "$(IMAGE_NAME)-arm64.tar.gz" ]; then \
+		echo "Error: $(IMAGE_NAME)-arm64.tar.gz not found"; \
+		exit 1; \
+	fi
+	gunzip -c $(IMAGE_NAME)-arm64.tar.gz | docker load
+	@echo "✓ Image loaded"
+
+push:
+	@if [ -z "$(REGISTRY)" ]; then \
+		echo "Error: REGISTRY not set"; \
+		echo "Usage: make push REGISTRY=yourname/tinydesk-tracker"; \
+		exit 1; \
+	fi
+	@echo "Pushing to registry: $(REGISTRY):$(IMAGE_TAG)"
+	docker tag $(IMAGE_NAME):$(IMAGE_TAG) $(REGISTRY):$(IMAGE_TAG)
+	docker push $(REGISTRY):$(IMAGE_TAG)
+	@echo "✓ Pushed to $(REGISTRY):$(IMAGE_TAG)"
+
+logs:
+	docker-compose logs -f
+
+status:
+	docker-compose ps
+	@echo ""
+	@curl -s http://localhost:5000/api/status | python3 -m json.tool || echo "Service not responding"
+
+
+

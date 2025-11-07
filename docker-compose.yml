@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: tinydesk-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-tinydesk}
+      - POSTGRES_USER=${POSTGRES_USER:-tinydesk}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tinydesk}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  tinydesk-tracker:
+    build: .
+    deploy:
+      replicas: ${TRACKER_REPLICAS:-1}
+    #container_name: tinydesk-tracker
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persist database
+      - ./data:/app/data
+    environment:
+      # YouTube API Configuration
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - NPR_MUSIC_CHANNEL_ID=${NPR_MUSIC_CHANNEL_ID:-UC4eYXhJI4-7wSWc8UNRwD4A}
+      - DB_FILE=/app/data/tinydesk.db
+      # Use Postgres in this deployment
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-tinydesk}:${POSTGRES_PASSWORD:-tinydesk}@db:5432/${POSTGRES_DB:-tinydesk}
+      - UPDATE_INTERVAL_HOURS=${UPDATE_INTERVAL_HOURS:-0.5}
+      # Optionally use cron or schedule
+      - UPDATE_CRON=${UPDATE_CRON}
+      - UPDATE_SCHEDULE=${UPDATE_SCHEDULE}
+      - UPDATE_LOCK_TTL_SECONDS=${UPDATE_LOCK_TTL_SECONDS:-7200}
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import requests; requests.get('http://localhost:5000/api/status')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+
+volumes:
+  postgres-data:
+
+
