@@ -47,9 +47,10 @@ public class ApiController {
         long nextUpdate = schedulerService.computeNextUpdateTimestamp(lastUpdate);
         
         List<Video> videos = databaseService.getTopVideos(100);
-        List<Map<String, Object>> videoList = videos.stream()
-                .map(this::videoToMap)
-                .toList();
+        List<Map<String, Object>> videoList = new ArrayList<>(videos.size());
+        for (int i = 0; i < videos.size(); i++) {
+            videoList.add(videoToMap(videos.get(i), i + 1));
+        }
         
         Map<String, Object> response = new HashMap<>();
         response.put("videos", videoList);
@@ -127,6 +128,8 @@ public class ApiController {
     @GetMapping("/ranking-history")
     public ResponseEntity<Map<String, Object>> getRankingHistory() {
         List<Long> timestamps = databaseService.getDistinctTimestamps();
+        Map<String, Video> videoLookup = databaseService.getTopVideos(1000).stream()
+                .collect(Collectors.toMap(Video::getVideoId, v -> v, (existing, replacement) -> existing));
         
         Map<String, Map<String, Object>> rankingEvolution = new HashMap<>();
         
@@ -143,12 +146,8 @@ public class ApiController {
                 String videoId = h.getVideoId();
                 
                 if (!rankingEvolution.containsKey(videoId)) {
-                    Optional<Video> videoOpt = databaseService.getTopVideos(1000).stream()
-                            .filter(v -> v.getVideoId().equals(videoId))
-                            .findFirst();
-                    
-                    if (videoOpt.isPresent()) {
-                        Video video = videoOpt.get();
+                    Video video = videoLookup.get(videoId);
+                    if (video != null) {
                         Map<String, Object> videoData = new HashMap<>();
                         videoData.put("videoId", videoId);
                         videoData.put("title", video.getTitle());
@@ -346,11 +345,8 @@ public class ApiController {
         return ResponseEntity.ok(response);
     }
     
-    private Map<String, Object> videoToMap(Video video) {
+    private Map<String, Object> videoToMap(Video video, int rank) {
         Map<String, Object> map = new HashMap<>();
-        List<Video> allVideos = databaseService.getTopVideos(1000);
-        int rank = allVideos.indexOf(video) + 1;
-        
         map.put("rank", rank);
         map.put("videoId", video.getVideoId());
         map.put("title", video.getTitle());
