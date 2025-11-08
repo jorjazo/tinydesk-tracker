@@ -1,0 +1,145 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-videos-table
+      author: tinydesk-tracker
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: videos
+      changes:
+        - createTable:
+            tableName: videos
+            columns:
+              - column:
+                  name: video_id
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(1000)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: current_views
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_updated
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: published_at
+                  type: varchar(100)
+
+  - changeSet:
+      id: 001-create-history-table
+      author: tinydesk-tracker
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: history
+      changes:
+        - createTable:
+            tableName: history
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: video_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: timestamp
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: view_count
+                  type: bigint
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_history_video_id
+            tableName: history
+            columns:
+              - column:
+                  name: video_id
+        - createIndex:
+            indexName: idx_history_timestamp
+            tableName: history
+            columns:
+              - column:
+                  name: timestamp
+        - addForeignKeyConstraint:
+            baseTableName: history
+            baseColumnNames: video_id
+            constraintName: fk_history_video
+            referencedTableName: videos
+            referencedColumnNames: video_id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 001-create-metadata-table
+      author: tinydesk-tracker
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: metadata
+      changes:
+        - createTable:
+            tableName: metadata
+            columns:
+              - column:
+                  name: key
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: value
+                  type: varchar(2000)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 001-create-locks-table
+      author: tinydesk-tracker
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: locks
+      changes:
+        - createTable:
+            tableName: locks
+            columns:
+              - column:
+                  name: key
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: owner
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: bigint
+                  constraints:
+                    nullable: false
+

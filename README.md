@@ -22,6 +22,7 @@ A modern Spring Boot application for tracking NPR Tiny Desk concert view counts 
 - **Thymeleaf** for server-side templating
 - **Spring Data JPA** with Hibernate
 - **PostgreSQL** (H2 for testing)
+- **Liquibase** for database migrations
 - **Gradle** for build management
 
 ## Requirements
@@ -251,6 +252,30 @@ CREATE TABLE locks (
 );
 ```
 
+### Database Migrations
+
+This project uses **Liquibase** for managing database schema changes. Migrations are automatically applied when the application starts.
+
+**Location:** `src/main/resources/db/changelog/`
+
+**Key Features:**
+- ✅ Automatic schema migrations on startup
+- ✅ Version-controlled schema changes
+- ✅ Safe rollback capabilities
+- ✅ Automatic sequence fix for existing databases
+
+**To create a new migration:**
+1. Add a new YAML file in `db/changelog/migrations/`
+2. Include it in `db.changelog-master.yaml`
+3. See `db/changelog/README.md` for detailed instructions
+
+**To disable migrations** (not recommended):
+```bash
+SPRING_LIQUIBASE_ENABLED=false
+```
+
+For more information, see [Database Migrations Guide](src/main/resources/db/changelog/README.md).
+
 ## Deployment
 
 ### Systemd Service
@@ -348,13 +373,22 @@ sudo journalctl -u tinydesk-tracker -f
 - Check API quota usage
 
 ### Database Issues
-```bash
-# Check database file permissions
-ls -la data/tinydesk.db
 
-# For PostgreSQL, check connection
+**Sequence/Primary Key Errors:**
+If you see errors like "duplicate key value violates unique constraint", Liquibase will automatically fix this on the next startup with migration `002-fix-history-sequence.yaml`.
+
+```bash
+# Check database connection
 psql -h localhost -U tinydesk -d tinydesk
+
+# View Liquibase migration history
+SELECT * FROM databasechangelog ORDER BY dateexecuted DESC;
+
+# View Liquibase lock status
+SELECT * FROM databasechangeloglock;
 ```
+
+For more database troubleshooting, see [Database Migrations Guide](src/main/resources/db/changelog/README.md).
 
 ### Port Already in Use
 ```bash

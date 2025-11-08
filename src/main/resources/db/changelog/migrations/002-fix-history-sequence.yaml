@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-fix-history-sequence
+      author: tinydesk-tracker
+      comment: Fix history table sequence to prevent duplicate key errors
+      preConditions:
+        - onFail: MARK_RAN
+        - dbms:
+            type: postgresql
+      changes:
+        - sql:
+            sql: >
+              SELECT setval(
+                pg_get_serial_sequence('history', 'id'),
+                COALESCE((SELECT MAX(id) FROM history), 0) + 1,
+                false
+              );
+            comment: Reset the sequence to max(id) + 1 to prevent duplicate key errors
+      rollback:
+        - sql:
+            sql: SELECT 1; -- No rollback needed for sequence fix
+

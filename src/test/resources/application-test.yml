@@ -17,6 +17,9 @@ spring:
   sql:
     init:
       mode: never
+  
+  liquibase:
+    enabled: false
 
 tinydesk:
   youtube:

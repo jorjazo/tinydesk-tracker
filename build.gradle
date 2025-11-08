@@ -36,6 +36,9 @@ dependencies {
     // Cron expression parsing
     implementation 'com.cronutils:cron-utils:9.2.1'
     
+    // Database Migration
+    implementation 'org.liquibase:liquibase-core'
+    
     // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
