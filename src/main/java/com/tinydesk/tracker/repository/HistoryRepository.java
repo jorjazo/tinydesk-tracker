@@ -39,7 +39,7 @@ public interface HistoryRepository extends JpaRepository<History, Long> {
            "  SELECT id FROM (" +
            "    SELECT id, ROW_NUMBER() OVER (PARTITION BY video_id ORDER BY timestamp DESC) as rn " +
            "    FROM history WHERE video_id = :videoId" +
-           "  ) WHERE rn > :keepCount" +
+           "  ) AS subquery WHERE rn > :keepCount" +
            ")", nativeQuery = true)
     void deleteOldHistoryEntries(@Param("videoId") String videoId, @Param("keepCount") int keepCount);
     
