@@ -15,11 +15,10 @@ import lombok.NoArgsConstructor;
 })
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class History {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     
     @Column(name = "video_id", nullable = false)

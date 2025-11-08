@@ -16,9 +16,9 @@ import lombok.NoArgsConstructor;
 public class Metadata {
     
     @Id
-    @Column(name = "key", nullable = false)
+    @Column(name = "`key`", nullable = false)
     private String key;
     
-    @Column(name = "value", nullable = false)
+    @Column(name = "`value`", nullable = false)
     private String value;
 }

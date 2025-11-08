@@ -1,0 +1,41 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          batch_size: 20
+    defer-datasource-initialization: false
+  sql:
+    init:
+      mode: never
+
+tinydesk:
+  youtube:
+    api-key: fake-test-key
+    channel-id: test-channel-id
+    playlist-id: TEST_PLAYLIST_ID
+    max-results-per-request: 50
+    total-videos-to-fetch: 100
+  scheduler:
+    enabled: false
+    update-cron: "0 0 6 * * *"
+    update-interval-hours: 6.0
+    lock-ttl-seconds: 60
+
+server:
+  port: 0
+
+logging:
+  level:
+    root: WARN
+    com.tinydesk: INFO
+

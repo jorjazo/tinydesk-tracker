@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 public class Lock {
     
     @Id
-    @Column(name = "key", nullable = false)
+    @Column(name = "`key`", nullable = false)
     private String key;
     
     @Column(name = "owner", nullable = false)
