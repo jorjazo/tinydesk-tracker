@@ -3,4 +3,6 @@ databaseChangeLog:
       file: db/changelog/migrations/001-initial-schema.yaml
   - include:
       file: db/changelog/migrations/002-fix-history-sequence.yaml
+  - include:
+      file: db/changelog/migrations/003-add-playlist-id-column.yaml
 

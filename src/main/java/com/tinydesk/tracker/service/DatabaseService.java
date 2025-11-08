@@ -48,7 +48,7 @@ public class DatabaseService {
      * Save or update video with view count history.
      */
     @Transactional
-    public void saveVideo(String videoId, String title, Long viewCount, Long timestamp, String publishedAt) {
+    public void saveVideo(String videoId, String title, Long viewCount, Long timestamp, String publishedAt, String playlistId) {
         Video video = videoRepository.findById(videoId).orElse(new Video());
         video.setVideoId(videoId);
         video.setTitle(title);
@@ -56,6 +56,9 @@ public class DatabaseService {
         video.setLastUpdated(timestamp);
         if (publishedAt != null && (video.getPublishedAt() == null || video.getPublishedAt().isEmpty())) {
             video.setPublishedAt(publishedAt);
+        }
+        if (playlistId != null) {
+            video.setPlaylistId(playlistId);
         }
         videoRepository.save(video);
         
@@ -83,6 +86,41 @@ public class DatabaseService {
         }
         return videoRepository.findAll(PageRequest.of(0, limit, Sort.by(Sort.Order.desc("currentViews"))))
                 .getContent();
+    }
+    
+    /**
+     * Get top N videos by view count filtered by playlist ID.
+     */
+    public List<Video> getTopVideos(int limit, String playlistId) {
+        if (limit <= 0) {
+            return List.of();
+        }
+        if (playlistId == null || playlistId.isEmpty()) {
+            return getTopVideos(limit);
+        }
+        return videoRepository.findByPlaylistId(playlistId, PageRequest.of(0, limit, Sort.by(Sort.Order.desc("currentViews"))))
+                .getContent();
+    }
+    
+    /**
+     * Get top N videos by view count filtered by multiple playlist IDs.
+     */
+    public List<Video> getTopVideos(int limit, List<String> playlistIds) {
+        if (limit <= 0) {
+            return List.of();
+        }
+        if (playlistIds == null || playlistIds.isEmpty()) {
+            return getTopVideos(limit);
+        }
+        return videoRepository.findByPlaylistIdIn(playlistIds, PageRequest.of(0, limit, Sort.by(Sort.Order.desc("currentViews"))))
+                .getContent();
+    }
+    
+    /**
+     * Get distinct playlist IDs.
+     */
+    public List<String> getDistinctPlaylistIds() {
+        return videoRepository.findDistinctPlaylistIds();
     }
     
     /**

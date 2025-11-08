@@ -34,6 +34,9 @@ public class Video {
     @Column(name = "published_at")
     private String publishedAt;
     
+    @Column(name = "playlist_id", nullable = false)
+    private String playlistId;
+    
     @OneToMany(mappedBy = "video", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<History> historyEntries = new ArrayList<>();
 }

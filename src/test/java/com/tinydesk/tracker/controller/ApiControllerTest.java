@@ -41,7 +41,7 @@ public class ApiControllerTest {
     public void testApiTopReturnsTrackedVideos() throws Exception {
         long timestamp = System.currentTimeMillis() / 1000;
         
-        databaseService.saveVideo("vid", "Title", 100L, timestamp, "2020-01-01T00:00:00Z");
+        databaseService.saveVideo("vid", "Title", 100L, timestamp, "2020-01-01T00:00:00Z", "PL1B627337ED6F55F0");
         databaseService.setMetadata("lastUpdate", String.valueOf(timestamp));
         databaseService.setMetadata("totalVideos", "1");
         
@@ -72,9 +72,9 @@ public class ApiControllerTest {
     public void testApiTopWithMultipleVideos() throws Exception {
         long timestamp = System.currentTimeMillis() / 1000;
         
-        databaseService.saveVideo("v1", "Video 1", 100L, timestamp, "2020-01-01T00:00:00Z");
-        databaseService.saveVideo("v2", "Video 2", 200L, timestamp, "2020-01-02T00:00:00Z");
-        databaseService.saveVideo("v3", "Video 3", 150L, timestamp, "2020-01-03T00:00:00Z");
+        databaseService.saveVideo("v1", "Video 1", 100L, timestamp, "2020-01-01T00:00:00Z", "PL1B627337ED6F55F0");
+        databaseService.saveVideo("v2", "Video 2", 200L, timestamp, "2020-01-02T00:00:00Z", "PL1B627337ED6F55F0");
+        databaseService.saveVideo("v3", "Video 3", 150L, timestamp, "2020-01-03T00:00:00Z", "PL1B627337ED6F55F0");
         databaseService.setMetadata("lastUpdate", String.valueOf(timestamp));
         databaseService.setMetadata("totalVideos", "3");
         
@@ -95,9 +95,9 @@ public class ApiControllerTest {
         long baseTimestamp = System.currentTimeMillis() / 1000;
         
         // Save video with multiple history entries
-        databaseService.saveVideo("vid", "Video", 100L, baseTimestamp, "2020-01-01T00:00:00Z");
-        databaseService.saveVideo("vid", "Video", 150L, baseTimestamp + 3600, "2020-01-01T00:00:00Z");
-        databaseService.saveVideo("vid", "Video", 200L, baseTimestamp + 7200, "2020-01-01T00:00:00Z");
+        databaseService.saveVideo("vid", "Video", 100L, baseTimestamp, "2020-01-01T00:00:00Z", "PL1B627337ED6F55F0");
+        databaseService.saveVideo("vid", "Video", 150L, baseTimestamp + 3600, "2020-01-01T00:00:00Z", "PL1B627337ED6F55F0");
+        databaseService.saveVideo("vid", "Video", 200L, baseTimestamp + 7200, "2020-01-01T00:00:00Z", "PL1B627337ED6F55F0");
         
         mockMvc.perform(get("/api/history/vid"))
                 .andExpect(status().isOk())

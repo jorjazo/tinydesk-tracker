@@ -69,8 +69,8 @@ public class TinyDeskTrackerServiceTest {
     @Test
     public void testUpdateHistoricalData() {
         List<TinyDeskTrackerService.VideoSnapshot> videos = List.of(
-                new TinyDeskTrackerService.VideoSnapshot("v1", "Video 1", 100L, "2020-01-01T00:00:00Z"),
-                new TinyDeskTrackerService.VideoSnapshot("v2", "Video 2", 200L, "2020-01-02T00:00:00Z")
+                new TinyDeskTrackerService.VideoSnapshot("v1", "Video 1", 100L, "2020-01-01T00:00:00Z", "PL1B627337ED6F55F0"),
+                new TinyDeskTrackerService.VideoSnapshot("v2", "Video 2", 200L, "2020-01-02T00:00:00Z", "PL1B627337ED6F55F0")
         );
         
         trackerService.updateHistoricalData(videos);
@@ -136,10 +136,15 @@ public class TinyDeskTrackerServiceTest {
         
         List<TinyDeskTrackerService.VideoSnapshot> videos = trackerService.fetchAllVideos();
         
-        assertThat(videos).hasSize(2);
+        // Now fetches from 2 playlists, so we get 4 videos total (2 from each)
+        assertThat(videos).hasSize(4);
         assertThat(videos.stream().map(TinyDeskTrackerService.VideoSnapshot::videoId))
-                .containsExactlyInAnyOrder("abc", "def");
+                .contains("abc", "def");
         assertThat(videos.get(0).title()).startsWith("Title");
+        // Verify we have videos from both playlists
+        assertThat(videos.stream().map(TinyDeskTrackerService.VideoSnapshot::playlistId).distinct())
+                .hasSize(2)
+                .contains("PL1B627337ED6F55F0", "PLy2PCKGkKRVYPm1tBwoX45ocAzuhVyvJX");
     }
     
     @Test
