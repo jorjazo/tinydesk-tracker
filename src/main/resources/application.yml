@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: tinydesk-tracker
+  
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/tinydesk}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+
+server:
+  port: 5000
+  error:
+    include-message: always
+    include-stacktrace: never
+
+# Application-specific configuration
+tinydesk:
+  youtube:
+    api-key: ${YOUTUBE_API_KEY:}
+    channel-id: ${NPR_MUSIC_CHANNEL_ID:UC4eYXhJI4-7wSWc8UNRwD4A}
+    playlist-id: ${TINY_DESK_PLAYLIST_ID:PL1B627337ED6F55F0}
+    max-results-per-request: ${MAX_RESULTS_PER_REQUEST:50}
+    total-videos-to-fetch: ${TOTAL_VIDEOS_TO_FETCH:1000}
+  
+  scheduler:
+    update-interval-hours: ${UPDATE_INTERVAL_HOURS:6}
+    update-cron: ${UPDATE_CRON:0 */30 * * * *}
+    update-schedule: ${UPDATE_SCHEDULE:}
+    lock-ttl-seconds: ${UPDATE_LOCK_TTL_SECONDS:7200}
+    enabled: ${SCHEDULER_ENABLED:true}
+
+logging:
+  level:
+    com.tinydesk.tracker: INFO
+    org.springframework.web: INFO
+    org.hibernate: WARN

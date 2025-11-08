@@ -1,38 +1,42 @@
-# Multi-stage Dockerfile for Raspberry Pi Tiny Desk Tracker
-# Supports both native ARM64 and cross-compilation from AMD64
+# Multi-stage Dockerfile for Spring Boot TinyDesk Tracker
 
-FROM python:3.11-slim
+# Stage 1: Build the application
+FROM gradle:8.5-jdk17 AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    sqlite3 \
-    && rm -rf /var/lib/apt/lists/*
+# Copy Gradle wrapper and build files
+COPY gradle gradle
+COPY gradlew .
+COPY settings.gradle .
+COPY build.gradle .
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Download dependencies (cached layer)
+RUN ./gradlew dependencies --no-daemon
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy source code
+COPY src src
 
-# Copy application files
-COPY tinydesk_tracker/ tinydesk_tracker/
-COPY templates/ templates/
+# Build the application
+RUN ./gradlew bootJar --no-daemon
+
+# Stage 2: Runtime image
+FROM eclipse-temurin:17-jre-alpine
+
+WORKDIR /app
 
 # Create data directory
 RUN mkdir -p /app/data
 
-# Expose Flask port
+# Copy the built JAR from builder stage
+COPY --from=builder /app/build/libs/*.jar app.jar
+
+# Expose port
 EXPOSE 5000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:5000/api/status')" || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/api/status || exit 1
 
 # Run the application
-CMD ["python3", "-m", "tinydesk_tracker"]
-
-
-
+ENTRYPOINT ["java", "-jar", "app.jar"]
