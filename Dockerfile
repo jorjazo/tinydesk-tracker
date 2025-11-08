@@ -18,7 +18,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
-COPY tinydesk_tracker.py .
+COPY tinydesk_tracker/ tinydesk_tracker/
 COPY templates/ templates/
 
 # Create data directory
@@ -32,7 +32,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:5000/api/status')" || exit 1
 
 # Run the application
-CMD ["python3", "tinydesk_tracker.py"]
+CMD ["python3", "-m", "tinydesk_tracker"]
 
 
 

@@ -48,5 +48,5 @@ mkdir -p data
 echo ""
 echo "Starting Tiny Desk Tracker..."
 echo ""
-python3 tinydesk_tracker.py
+python3 -m tinydesk_tracker
 
