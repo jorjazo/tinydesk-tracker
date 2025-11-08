@@ -3,10 +3,9 @@ spring:
     name: tinydesk-tracker
   
   datasource:
-    url: ${DATABASE_URL:jdbc:sqlite:./data/tinydesk.db}
-    driver-class-name: ${DATABASE_DRIVER:org.sqlite.JDBC}
-    username: ${DATABASE_USERNAME:}
-    password: ${DATABASE_PASSWORD:}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/tinydesk}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
   
   jpa:
     hibernate:
@@ -14,7 +13,6 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: ${HIBERNATE_DIALECT:org.hibernate.community.dialect.SQLiteDialect}
         format_sql: true
   
   thymeleaf:

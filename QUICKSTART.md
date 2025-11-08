@@ -65,8 +65,8 @@ Open your browser:
 
 ## 📊 What Happens on First Run
 
-1. Application creates `data/` directory
-2. Initializes SQLite database
+1. Connects to PostgreSQL database (Docker Compose starts it automatically)
+2. Creates database schema automatically
 3. Performs initial fetch of all Tiny Desk videos
 4. Starts web server on port 5000
 5. Schedules automatic updates (every 30 minutes by default)
@@ -133,9 +133,9 @@ Edit `.env` or `application.yml`:
 SERVER_PORT=8080
 ```
 
-### Use PostgreSQL Instead of SQLite
+### Configure PostgreSQL Connection
 
-Edit `.env`:
+The application uses PostgreSQL by default. To customize connection settings, edit `.env`:
 ```bash
 DATABASE_URL=jdbc:postgresql://localhost:5432/tinydesk
 DATABASE_DRIVER=org.postgresql.Driver

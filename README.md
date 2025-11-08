@@ -9,7 +9,7 @@ A modern Spring Boot application for tracking NPR Tiny Desk concert view counts 
 - 🌐 Beautiful web interface with Thymeleaf templates
 - ⏰ Automatic updates via Spring Scheduler (configurable cron)
 - 📈 Real-time analytics and trending metrics
-- 💾 SQLite or PostgreSQL database support
+- 💾 PostgreSQL database support (H2 for testing)
 - 🔒 Distributed locking for multiple instances
 - 🐳 Docker and Docker Compose ready
 - ⚙️ Easy configuration via environment variables or application.yml
@@ -21,7 +21,7 @@ A modern Spring Boot application for tracking NPR Tiny Desk concert view counts 
 - **Spring MVC** for REST APIs
 - **Thymeleaf** for server-side templating
 - **Spring Data JPA** with Hibernate
-- **SQLite** (default) or **PostgreSQL**
+- **PostgreSQL** (H2 for testing)
 - **Gradle** for build management
 
 ## Requirements
@@ -84,7 +84,9 @@ java -jar build/libs/tinydesk-tracker-2.0.0.jar
 | `YOUTUBE_API_KEY` | Required | Your YouTube Data API v3 key |
 | `NPR_MUSIC_CHANNEL_ID` | `UC4eYXhJI4-7wSWc8UNRwD4A` | NPR Music channel ID |
 | `TINY_DESK_PLAYLIST_ID` | `PL1B627337ED6F55F0` | Tiny Desk playlist ID |
-| `DATABASE_URL` | `jdbc:sqlite:./data/tinydesk.db` | Database connection URL |
+| `DATABASE_URL` | `jdbc:postgresql://localhost:5432/tinydesk` | Database connection URL |
+| `DATABASE_USERNAME` | `postgres` | Database username |
+| `DATABASE_PASSWORD` | `postgres` | Database password |
 | `UPDATE_CRON` | `0 */30 * * * *` | Cron expression (every 30 min) |
 | `UPDATE_INTERVAL_HOURS` | `6` | Fallback update interval |
 | `SCHEDULER_ENABLED` | `true` | Enable/disable scheduled updates |
@@ -364,11 +366,12 @@ netstat -tlnp | grep 5000
 
 ## Migration from Python Version
 
-The Spring Boot version maintains backward compatibility with the Python version's database schema and API endpoints. You can:
+The Spring Boot version maintains the same API endpoints as the Python version. To migrate:
 
-1. Copy your existing `data/tinydesk.db` SQLite file
-2. Update environment variables to match the new format
-3. Run the Spring Boot version - it will use the existing data
+1. Export your data from the Python version
+2. Set up PostgreSQL database
+3. Update environment variables to match the new format
+4. Import your data or let the application fetch fresh data
 
 ## Comparison: Spring Boot vs Python/Flask
 
