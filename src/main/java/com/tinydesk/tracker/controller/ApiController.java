@@ -41,12 +41,22 @@ public class ApiController {
     }
     
     @GetMapping("/top")
-    public ResponseEntity<Map<String, Object>> getTop() {
+    public ResponseEntity<Map<String, Object>> getTop(
+            @RequestParam(required = false) String playlist,
+            @RequestParam(required = false) List<String> playlists) {
         Map<String, Object> metadata = trackerService.getMetadata();
         long lastUpdate = (long) metadata.get("lastUpdate");
         long nextUpdate = schedulerService.computeNextUpdateTimestamp(lastUpdate);
         
-        List<Video> videos = databaseService.getTopVideos(100);
+        List<Video> videos;
+        if (playlists != null && !playlists.isEmpty()) {
+            videos = databaseService.getTopVideos(100, playlists);
+        } else if (playlist != null && !playlist.isEmpty()) {
+            videos = databaseService.getTopVideos(100, playlist);
+        } else {
+            videos = databaseService.getTopVideos(100);
+        }
+        
         List<Map<String, Object>> videoList = new ArrayList<>(videos.size());
         for (int i = 0; i < videos.size(); i++) {
             videoList.add(videoToMap(videos.get(i), i + 1));
@@ -225,7 +235,9 @@ public class ApiController {
     }
     
     @PostMapping("/add-video/{videoId}")
-    public ResponseEntity<Map<String, Object>> addSpecificVideo(@PathVariable String videoId) {
+    public ResponseEntity<Map<String, Object>> addSpecificVideo(
+            @PathVariable String videoId,
+            @RequestParam(required = false) String playlistId) {
         try {
             var stats = youtubeService.getVideoStatistics(List.of(videoId));
             
@@ -241,13 +253,20 @@ public class ApiController {
             String publishedAt = item.getSnippet().getPublishedAt();
             long timestamp = System.currentTimeMillis() / 1000;
             
-            databaseService.saveVideo(videoId, title, viewCount, timestamp, publishedAt);
+            // Use provided playlistId or default to first configured playlist
+            String finalPlaylistId = playlistId;
+            if (finalPlaylistId == null || finalPlaylistId.isEmpty()) {
+                finalPlaylistId = databaseService.getDistinctPlaylistIds().stream().findFirst().orElse("unknown");
+            }
+            
+            databaseService.saveVideo(videoId, title, viewCount, timestamp, publishedAt, finalPlaylistId);
             
             Map<String, Object> response = new HashMap<>();
             response.put("status", "Video added successfully");
             response.put("videoId", videoId);
             response.put("title", title);
             response.put("views", viewCount);
+            response.put("playlistId", finalPlaylistId);
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -345,6 +364,16 @@ public class ApiController {
         return ResponseEntity.ok(response);
     }
     
+    @GetMapping("/playlists")
+    public ResponseEntity<Map<String, Object>> getPlaylists() {
+        List<String> playlistIds = databaseService.getDistinctPlaylistIds();
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("playlists", playlistIds);
+        
+        return ResponseEntity.ok(response);
+    }
+    
     private Map<String, Object> videoToMap(Video video, int rank) {
         Map<String, Object> map = new HashMap<>();
         map.put("rank", rank);
@@ -352,6 +381,7 @@ public class ApiController {
         map.put("title", video.getTitle());
         map.put("views", video.getCurrentViews());
         map.put("publishedAt", video.getPublishedAt());
+        map.put("playlistId", video.getPlaylistId());
         map.put("url", "https://www.youtube.com/watch?v=" + video.getVideoId());
         return map;
     }

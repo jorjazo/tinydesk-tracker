@@ -416,6 +416,12 @@
                 <input type="text" id="searchInput" placeholder="Search concerts...">
             </div>
             <div class="sort-controls">
+                <label for="playlistFilter">Playlist:</label>
+                <select id="playlistFilter" onchange="loadData()">
+                    <option value="all">All Playlists</option>
+                </select>
+            </div>
+            <div class="sort-controls">
                 <label for="sortBy">Sort by:</label>
                 <select id="sortBy" onchange="sortVideos()">
                     <option value="rank">Rank (Views)</option>
@@ -441,6 +447,11 @@
     
     <script>
         let allVideos = [];
+        let availablePlaylists = [];
+        let playlistNames = {
+            'PL1B627337ED6F55F0': 'Tiny Desk Concerts',
+            'PLy2PCKGkKRVYPm1tBwoX45ocAzuhVyvJX': 'Tiny Desk (Home) Concerts'
+        };
         
         function formatNumber(num) {
             if (num >= 1000000) {
@@ -556,15 +567,50 @@
             sortVideos(); // Use the sort function which also handles filtering
         }
         
+        async function loadPlaylists() {
+            try {
+                const response = await fetch('/api/playlists');
+                const data = await response.json();
+                
+                if (data.playlists && data.playlists.length > 0) {
+                    availablePlaylists = data.playlists;
+                    const playlistFilter = document.getElementById('playlistFilter');
+                    
+                    // Clear existing options except "All Playlists"
+                    while (playlistFilter.options.length > 1) {
+                        playlistFilter.remove(1);
+                    }
+                    
+                    // Add individual playlist options
+                    availablePlaylists.forEach(playlistId => {
+                        const option = document.createElement('option');
+                        option.value = playlistId;
+                        option.textContent = playlistNames[playlistId] || playlistId;
+                        playlistFilter.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading playlists:', error);
+            }
+        }
+        
         async function loadData() {
             const container = document.getElementById('tableContainer');
             const refreshBtn = document.getElementById('refreshBtn');
+            const playlistFilter = document.getElementById('playlistFilter');
             
             refreshBtn.disabled = true;
             container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><div>Loading concert data...</div></div>';
             
             try {
-                const response = await fetch('/api/top');
+                let url = '/api/top';
+                const selectedPlaylist = playlistFilter.value;
+                
+                if (selectedPlaylist !== 'all') {
+                    url += '?playlist=' + encodeURIComponent(selectedPlaylist);
+                }
+                
+                const response = await fetch(url);
                 const data = await response.json();
                 
                 if (data.error) {
@@ -615,7 +661,7 @@
         setInterval(loadData, 5 * 60 * 1000);
         
         // Initial load
-        loadData();
+        loadPlaylists().then(() => loadData());
     </script>
 </body>
 </html>

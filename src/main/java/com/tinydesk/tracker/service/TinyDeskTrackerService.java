@@ -42,25 +42,30 @@ public class TinyDeskTrackerService {
     /**
      * Snapshot of a Tiny Desk video fetched from the API.
      */
-    public record VideoSnapshot(String videoId, String title, long viewCount, String publishedAt) { }
+    public record VideoSnapshot(String videoId, String title, long viewCount, String publishedAt, String playlistId) { }
     
     /**
-     * Fetch all videos from the Tiny Desk playlist and collect them into a list.
+     * Fetch all videos from all configured playlists and collect them into a list.
      */
     public List<VideoSnapshot> fetchAllVideos() {
         List<VideoSnapshot> snapshots = new ArrayList<>();
-        streamAllVideos(snapshots::add);
+        Map<String, String> playlists = appConfig.getYoutube().getAllPlaylists();
+        for (Map.Entry<String, String> playlist : playlists.entrySet()) {
+            streamPlaylistVideos(playlist.getValue(), playlist.getKey(), snapshots::add);
+        }
         return snapshots;
     }
     
     /**
-     * Stream all videos from the Tiny Desk playlist, invoking the provided consumer
+     * Stream videos from a specific playlist, invoking the provided consumer
      * for each video as soon as it is retrieved.
      *
+     * @param playlistId the playlist ID to fetch from
+     * @param playlistName the playlist name for logging
      * @param consumer consumer invoked for every fetched video
      * @return total number of videos processed
      */
-    public long streamAllVideos(Consumer<VideoSnapshot> consumer) {
+    public long streamPlaylistVideos(String playlistId, String playlistName, Consumer<VideoSnapshot> consumer) {
         Objects.requireNonNull(consumer, "consumer must not be null");
         
         String pageToken = null;
@@ -68,15 +73,15 @@ public class TinyDeskTrackerService {
         long processed = 0L;
         
         log.info("\n" + "=".repeat(50));
-        log.info("Fetching Tiny Desk concerts from official playlist...");
-        log.info("Playlist ID: {}", appConfig.getYoutube().getPlaylistId());
+        log.info("Fetching videos from playlist: {}", playlistName);
+        log.info("Playlist ID: {}", playlistId);
         log.info("=".repeat(50));
         
         while (true) {
             log.info("\nFetching page {}...", pageNum);
             
             YouTubePlaylistResponse playlistResponse = youtubeService.getPlaylistVideos(
-                    appConfig.getYoutube().getPlaylistId(), pageToken);
+                    playlistId, pageToken);
             
             if (playlistResponse == null || playlistResponse.getItems() == null || playlistResponse.getItems().isEmpty()) {
                 log.info("No more results available");
@@ -115,7 +120,7 @@ public class TinyDeskTrackerService {
                             }
                         }
                         
-                        consumer.accept(new VideoSnapshot(item.getId(), title, viewCount, publishedAt));
+                        consumer.accept(new VideoSnapshot(item.getId(), title, viewCount, publishedAt, playlistId));
                         processed++;
                     }
                     log.info("✓ Fetched stats for {} videos", statsResponse.getItems().size());
@@ -142,7 +147,7 @@ public class TinyDeskTrackerService {
         }
         
         log.info("\n" + "=".repeat(50));
-        log.info("Total Tiny Desk playlist videos processed: {}", processed);
+        log.info("Total {} videos processed: {}", playlistName, processed);
         log.info("=".repeat(50) + "\n");
         
         return processed;
@@ -157,7 +162,7 @@ public class TinyDeskTrackerService {
         log.info("Saving to database...");
         AtomicInteger count = new AtomicInteger();
         videos.forEach(video -> {
-            databaseService.saveVideo(video.videoId(), video.title(), video.viewCount(), timestamp, video.publishedAt());
+            databaseService.saveVideo(video.videoId(), video.title(), video.viewCount(), timestamp, video.publishedAt(), video.playlistId());
             int processed = count.incrementAndGet();
             if (processed % 10 == 0) {
                 log.info("  Saved {}/{} videos...", processed, videos.size());
@@ -194,13 +199,17 @@ public class TinyDeskTrackerService {
                 AtomicInteger processed = new AtomicInteger();
                 long timestamp = System.currentTimeMillis() / 1000;
                 
-                long totalVideos = streamAllVideos(video -> {
-                    databaseService.saveVideo(video.videoId(), video.title(), video.viewCount(), timestamp, video.publishedAt());
-                    int saved = processed.incrementAndGet();
-                    if (saved % 10 == 0) {
-                        log.info("  Saved {} videos so far...", saved);
-                    }
-                });
+                Map<String, String> playlists = appConfig.getYoutube().getAllPlaylists();
+                long totalVideos = 0;
+                for (Map.Entry<String, String> playlist : playlists.entrySet()) {
+                    totalVideos += streamPlaylistVideos(playlist.getValue(), playlist.getKey(), video -> {
+                        databaseService.saveVideo(video.videoId(), video.title(), video.viewCount(), timestamp, video.publishedAt(), video.playlistId());
+                        int saved = processed.incrementAndGet();
+                        if (saved % 10 == 0) {
+                            log.info("  Saved {} videos so far...", saved);
+                        }
+                    });
+                }
                 
                 databaseService.setMetadata("lastUpdate", String.valueOf(timestamp));
                 databaseService.setMetadata("totalVideos", String.valueOf(totalVideos));

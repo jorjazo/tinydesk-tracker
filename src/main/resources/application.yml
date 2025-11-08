@@ -36,6 +36,9 @@ tinydesk:
     api-key: ${YOUTUBE_API_KEY:}
     channel-id: ${NPR_MUSIC_CHANNEL_ID:UC4eYXhJI4-7wSWc8UNRwD4A}
     playlist-id: ${TINY_DESK_PLAYLIST_ID:PL1B627337ED6F55F0}
+    playlists:
+      "Tiny Desk Concerts": ${TINY_DESK_PLAYLIST_ID:PL1B627337ED6F55F0}
+      "Tiny Desk (Home) Concerts": PLy2PCKGkKRVYPm1tBwoX45ocAzuhVyvJX
     max-results-per-request: ${MAX_RESULTS_PER_REQUEST:50}
     total-videos-to-fetch: ${TOTAL_VIDEOS_TO_FETCH:1000}
   
