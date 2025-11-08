@@ -114,16 +114,12 @@ UPDATE_INTERVAL_HOURS=6
 ### 4. Run
 
 ```bash
-# Make executable
-chmod +x tinydesk_tracker.py
-
-# Run
-./tinydesk_tracker.py
+python3 -m tinydesk_tracker
 ```
 
 Or:
 ```bash
-python3 tinydesk_tracker.py
+./start.sh
 ```
 
 ## Usage
@@ -177,7 +173,7 @@ Type=simple
 User=pi
 WorkingDirectory=/home/jorjazo/dev/priv/rpi-tinytracker
 Environment="PATH=/home/jorjazo/dev/priv/rpi-tinytracker/venv/bin"
-ExecStart=/home/jorjazo/dev/priv/rpi-tinytracker/venv/bin/python3 /home/jorjazo/dev/priv/rpi-tinytracker/tinydesk_tracker.py
+ExecStart=/home/jorjazo/dev/priv/rpi-tinytracker/venv/bin/python3 -m tinydesk_tracker
 Restart=always
 RestartSec=10
 
@@ -243,8 +239,8 @@ Data is stored in SQLite database at `./data/tinydesk.db` with the following sch
 ### Run in Debug Mode
 
 ```python
-# Edit tinydesk_tracker.py, change:
-app.run(host='0.0.0.0', port=5000, debug=True)
+# Edit tinydesk_tracker/__main__.py, change:
+app.run(host="0.0.0.0", port=5000, debug=True)
 ```
 
 ### Manual Update
@@ -265,7 +261,7 @@ tracker.update()
 
 ### Permission Errors
 ```bash
-chmod +x tinydesk_tracker.py
+python3 -m tinydesk_tracker
 mkdir -p data
 chmod 755 data
 ```

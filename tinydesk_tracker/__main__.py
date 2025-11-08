@@ -12,11 +12,11 @@ from threading import Thread
 import schedule
 from dotenv import load_dotenv
 
-from tinydesk_tracker.config import load_settings
-from tinydesk_tracker.database import Database
-from tinydesk_tracker.scheduler import schedule_updates
-from tinydesk_tracker.tracker import TinyDeskTracker
-from tinydesk_tracker.web import create_app
+from .config import load_settings
+from .database import Database
+from .scheduler import schedule_updates
+from .tracker import TinyDeskTracker
+from .web import create_app
 
 
 def _banner() -> None:

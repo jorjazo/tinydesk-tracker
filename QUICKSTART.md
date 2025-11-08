@@ -39,7 +39,7 @@ cp .env.example .env
 nano .env  # Add YouTube API key
 
 # 3. Run
-python3 tinydesk_tracker.py
+python3 -m tinydesk_tracker
 
 # Or use the helper script
 ./start.sh
@@ -81,7 +81,7 @@ docker cp tinydesk-tracker:/app/data/tinydesk.db ./backup.db
 # Stop (Ctrl+C)
 
 # Or if running in background
-pkill -f tinydesk_tracker.py
+pkill -f "python3 -m tinydesk_tracker"
 
 # Backup database
 cp data/tinydesk.db backup.db
