@@ -10,6 +10,7 @@ import com.tinydesk.tracker.repository.MetadataRepository;
 import com.tinydesk.tracker.repository.VideoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,8 +78,11 @@ public class DatabaseService {
      * Get top N videos by view count.
      */
     public List<Video> getTopVideos(int limit) {
-        List<Video> allVideos = videoRepository.findTopVideos();
-        return allVideos.stream().limit(limit).toList();
+        if (limit <= 0) {
+            return List.of();
+        }
+        return videoRepository.findAll(PageRequest.of(0, limit, Sort.by(Sort.Order.desc("currentViews"))))
+                .getContent();
     }
     
     /**

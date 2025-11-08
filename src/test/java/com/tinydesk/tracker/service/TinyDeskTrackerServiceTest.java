@@ -17,7 +17,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -69,21 +68,10 @@ public class TinyDeskTrackerServiceTest {
     
     @Test
     public void testUpdateHistoricalData() {
-        List<Map<String, Object>> videos = new ArrayList<>();
-        
-        Map<String, Object> video1 = new HashMap<>();
-        video1.put("videoId", "v1");
-        video1.put("title", "Video 1");
-        video1.put("viewCount", 100L);
-        video1.put("publishedAt", "2020-01-01T00:00:00Z");
-        videos.add(video1);
-        
-        Map<String, Object> video2 = new HashMap<>();
-        video2.put("videoId", "v2");
-        video2.put("title", "Video 2");
-        video2.put("viewCount", 200L);
-        video2.put("publishedAt", "2020-01-02T00:00:00Z");
-        videos.add(video2);
+        List<TinyDeskTrackerService.VideoSnapshot> videos = List.of(
+                new TinyDeskTrackerService.VideoSnapshot("v1", "Video 1", 100L, "2020-01-01T00:00:00Z"),
+                new TinyDeskTrackerService.VideoSnapshot("v2", "Video 2", 200L, "2020-01-02T00:00:00Z")
+        );
         
         trackerService.updateHistoricalData(videos);
         
@@ -146,11 +134,12 @@ public class TinyDeskTrackerServiceTest {
         when(youtubeService.getPlaylistVideos(anyString(), any())).thenReturn(playlistResponse);
         when(youtubeService.getVideoStatistics(any())).thenReturn(statsResponse);
         
-        List<Map<String, Object>> videos = trackerService.fetchAllVideos();
+        List<TinyDeskTrackerService.VideoSnapshot> videos = trackerService.fetchAllVideos();
         
         assertThat(videos).hasSize(2);
-        assertThat(videos.stream().map(v -> v.get("videoId"))).containsExactlyInAnyOrder("abc", "def");
-        assertThat(videos.get(0).get("title").toString()).startsWith("Title");
+        assertThat(videos.stream().map(TinyDeskTrackerService.VideoSnapshot::videoId))
+                .containsExactlyInAnyOrder("abc", "def");
+        assertThat(videos.get(0).title()).startsWith("Title");
     }
     
     @Test

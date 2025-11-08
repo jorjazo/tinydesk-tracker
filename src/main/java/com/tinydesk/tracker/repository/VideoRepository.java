@@ -19,12 +19,6 @@ public interface VideoRepository extends JpaRepository<Video, String> {
     List<Video> findTopByOrderByCurrentViewsDesc();
     
     /**
-     * Find videos ordered by current views descending with limit.
-     */
-    @Query("SELECT v FROM Video v ORDER BY v.currentViews DESC")
-    List<Video> findTopVideos();
-    
-    /**
      * Get total video count.
      */
     long count();
