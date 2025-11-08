@@ -54,8 +54,8 @@ public class DatabaseServiceTest {
     public void testSaveVideoAndGetTop() {
         long timestamp = System.currentTimeMillis() / 1000;
         
-        databaseService.saveVideo("v1", "Video 1", 100L, timestamp, "2020-01-01T00:00:00Z");
-        databaseService.saveVideo("v2", "Video 2", 200L, timestamp, "2020-01-02T00:00:00Z");
+        databaseService.saveVideo("v1", "Video 1", 100L, timestamp, "2020-01-01T00:00:00Z", "PL1B627337ED6F55F0");
+        databaseService.saveVideo("v2", "Video 2", 200L, timestamp, "2020-01-02T00:00:00Z", "PL1B627337ED6F55F0");
         
         List<Video> topVideos = databaseService.getTopVideos(10);
         
@@ -76,7 +76,7 @@ public class DatabaseServiceTest {
         
         // Add 120 history entries
         for (int offset = 0; offset < 120; offset++) {
-            databaseService.saveVideo("vid", "Video", (long) offset, baseTs + offset, "2020-01-01T00:00:00Z");
+            databaseService.saveVideo("vid", "Video", (long) offset, baseTs + offset, "2020-01-01T00:00:00Z", "PL1B627337ED6F55F0");
         }
         
         List<History> history = databaseService.getVideoHistory("vid");
@@ -104,8 +104,8 @@ public class DatabaseServiceTest {
     public void testGetStats() {
         long timestamp = System.currentTimeMillis() / 1000;
         
-        databaseService.saveVideo("v1", "Video 1", 100L, timestamp, "2020-01-01T00:00:00Z");
-        databaseService.saveVideo("v2", "Video 2", 200L, timestamp, "2020-01-02T00:00:00Z");
+        databaseService.saveVideo("v1", "Video 1", 100L, timestamp, "2020-01-01T00:00:00Z", "PL1B627337ED6F55F0");
+        databaseService.saveVideo("v2", "Video 2", 200L, timestamp, "2020-01-02T00:00:00Z", "PL1B627337ED6F55F0");
         
         Map<String, Long> stats = databaseService.getStats();
         
