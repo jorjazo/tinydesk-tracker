@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YouTube Tiny Desk Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: backgroundScroll 60s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes backgroundScroll {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1);
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M0,0 C150,80 350,80 600,50 C850,20 1050,20 1200,40 L1200,0 Z" fill="rgba(255,255,255,0.05)"/></svg>');
+            background-size: cover;
+            opacity: 0.5;
+        }
+        
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            position: relative;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            letter-spacing: -0.5px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.25);
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .badge:hover {
+            background: rgba(255,255,255,0.35);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+        
+        .stat-card .label {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .controls {
+            padding: 20px 30px;
+            background: white;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sort-controls label {
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        .sort-controls select {
+            padding: 10px 15px;
+            border: 2px solid #e0e7ff;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s ease;
+        }
+        
+        .sort-controls select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .sort-controls select:hover {
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            max-width: 400px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #e0e7ff;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .search-box input:hover {
+            border-color: #667eea;
+        }
+        
+        .table-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+        }
+        
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f3f5;
+        }
+        
+        tbody tr {
+            transition: all 0.2s ease;
+        }
+        
+        tbody tr:hover {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            transform: scale(1.01);
+        }
+        
+        .rank {
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.3em;
+            width: 60px;
+        }
+        
+        .title {
+            max-width: 500px;
+        }
+        
+        .title a {
+            color: #212529;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .title a:hover {
+            color: #667eea;
+            text-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .views {
+            font-weight: 700;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            white-space: nowrap;
+            font-size: 1.05em;
+        }
+        
+        .age {
+            color: #6c757d;
+            white-space: nowrap;
+            font-size: 0.9em;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            text-align: center;
+            padding: 60px 20px;
+            color: #dc3545;
+        }
+        
+        .footer {
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9em;
+            background: #f8f9fa;
+        }
+        
+        .medal {
+            margin-right: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-box {
+                max-width: 100%;
+            }
+            
+            .sort-controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .sort-controls select {
+                flex: 1;
+            }
+            
+            table {
+                font-size: 0.9em;
+            }
+            
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 NPR Tiny Desk Concerts</h1>
+            <p>Top 100 Most Viewed Performances</p>
+            <div style="margin-top: 15px;">
+                <a href="/dashboard" class="badge" style="margin-left: 10px; background: rgba(255,255,255,0.3); text-decoration: none; cursor: pointer;">📊 Dashboard</a>
+                <a href="/history" class="badge" style="margin-left: 10px; background: rgba(255,255,255,0.3); text-decoration: none; cursor: pointer;">📈 History</a>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="label">Total Videos</div>
+                <div class="value" id="totalVideos">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Last Update</div>
+                <div class="value" id="lastUpdate" style="font-size: 1.2em;">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Next Update</div>
+                <div class="value" id="nextUpdate" style="font-size: 1.2em;">-</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search concerts...">
+            </div>
+            <div class="sort-controls">
+                <label for="sortBy">Sort by:</label>
+                <select id="sortBy" onchange="sortVideos()">
+                    <option value="rank">Rank (Views)</option>
+                    <option value="title">Title (A-Z)</option>
+                    <option value="age">Age (Newest)</option>
+                    <option value="age-oldest">Age (Oldest)</option>
+                </select>
+            </div>
+            <button class="btn" id="refreshBtn" onclick="loadData()">🔄 Refresh</button>
+        </div>
+        
+        <div class="table-container" id="tableContainer">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <div>Loading concert data...</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            Powered by Raspberry Pi 5 | Data from YouTube Data API v3
+        </div>
+    </div>
+    
+    <script>
+        let allVideos = [];
+        
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+        
+        function formatDate(timestamp) {
+            if (!timestamp || timestamp === 0) return 'Never';
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString();
+        }
+        
+        function getRankMedal(rank) {
+            if (rank === 1) return '🥇';
+            if (rank === 2) return '🥈';
+            if (rank === 3) return '🥉';
+            return '';
+        }
+        
+        function getVideoAge(publishedAt) {
+            if (!publishedAt) return 'Unknown';
+            
+            const published = new Date(publishedAt);
+            const now = new Date();
+            const diffMs = now - published;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffYears = Math.floor(diffDays / 365);
+            const diffMonths = Math.floor(diffDays / 30);
+            
+            if (diffYears > 0) {
+                const remainingMonths = Math.floor((diffDays % 365) / 30);
+                if (remainingMonths > 0) {
+                    return `${diffYears}y ${remainingMonths}m`;
+                }
+                return `${diffYears} year${diffYears > 1 ? 's' : ''}`;
+            } else if (diffMonths > 0) {
+                return `${diffMonths} month${diffMonths > 1 ? 's' : ''}`;
+            } else if (diffDays > 0) {
+                return `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+            } else {
+                return 'Today';
+            }
+        }
+        
+        function renderTable(videos) {
+            const container = document.getElementById('tableContainer');
+            
+            if (!videos || videos.length === 0) {
+                container.innerHTML = '<div class="error">No data available</div>';
+                return;
+            }
+            
+            let html = '<table><thead><tr>';
+            html += '<th class="rank">Rank</th>';
+            html += '<th class="title">Title</th>';
+            html += '<th class="views">Views</th>';
+            html += '<th class="age">Age</th>';
+            html += '</tr></thead><tbody>';
+            
+            videos.forEach(video => {
+                html += '<tr>';
+                html += `<td class="rank">${getRankMedal(video.rank)} ${video.rank}</td>`;
+                html += `<td class="title"><a href="${video.url}" target="_blank">${video.title}</a></td>`;
+                html += `<td class="views">${formatNumber(video.views)}</td>`;
+                html += `<td class="age">${getVideoAge(video.publishedAt)}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function getVideoAgeInDays(publishedAt) {
+            if (!publishedAt) return 999999; // Put unknown at the end
+            const published = new Date(publishedAt);
+            const now = new Date();
+            return Math.floor((now - published) / (1000 * 60 * 60 * 24));
+        }
+        
+        function sortVideos() {
+            const sortBy = document.getElementById('sortBy').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filtered = allVideos.filter(video => 
+                video.title.toLowerCase().includes(searchTerm)
+            );
+            
+            switch(sortBy) {
+                case 'rank':
+                    filtered.sort((a, b) => a.rank - b.rank);
+                    break;
+                case 'title':
+                    filtered.sort((a, b) => a.title.localeCompare(b.title));
+                    break;
+                case 'age':
+                    // Newest first (smaller age in days)
+                    filtered.sort((a, b) => getVideoAgeInDays(a.publishedAt) - getVideoAgeInDays(b.publishedAt));
+                    break;
+                case 'age-oldest':
+                    // Oldest first (larger age in days)
+                    filtered.sort((a, b) => getVideoAgeInDays(b.publishedAt) - getVideoAgeInDays(a.publishedAt));
+                    break;
+            }
+            
+            renderTable(filtered);
+        }
+        
+        function filterVideos(searchTerm) {
+            sortVideos(); // Use the sort function which also handles filtering
+        }
+        
+        async function loadData() {
+            const container = document.getElementById('tableContainer');
+            const refreshBtn = document.getElementById('refreshBtn');
+            
+            refreshBtn.disabled = true;
+            container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><div>Loading concert data...</div></div>';
+            
+            try {
+                const response = await fetch('/api/top');
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                allVideos = data.videos || [];
+                
+                // Update stats
+                document.getElementById('totalVideos').textContent = data.total || 0;
+                document.getElementById('lastUpdate').textContent = formatDate(data.lastUpdate);
+                
+                // Use server-provided nextUpdate if available
+                if (data.nextUpdate) {
+                    const now = Math.floor(Date.now() / 1000);
+                    const timeLeft = data.nextUpdate - now;
+                    if (timeLeft > 0) {
+                        const hours = Math.floor(timeLeft / 3600);
+                        const minutes = Math.floor((timeLeft % 3600) / 60);
+                        if (hours > 0) {
+                            document.getElementById('nextUpdate').textContent = `${hours}h ${minutes}m`;
+                        } else {
+                            document.getElementById('nextUpdate').textContent = `${minutes}m`;
+                        }
+                    } else {
+                        document.getElementById('nextUpdate').textContent = 'Soon';
+                    }
+                } else {
+                    document.getElementById('nextUpdate').textContent = '-';
+                }
+                
+                renderTable(allVideos);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                container.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            } finally {
+                refreshBtn.disabled = false;
+            }
+        }
+        
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            filterVideos(e.target.value);
+        });
+        
+        // Auto-refresh every 5 minutes
+        setInterval(loadData, 5 * 60 * 1000);
+        
+        // Initial load
+        loadData();
+    </script>
+</body>
+</html>
+

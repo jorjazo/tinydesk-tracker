@@ -1,142 +1,124 @@
-# YouTube Tiny Desk Concert Tracker - Raspberry Pi Edition
+# YouTube Tiny Desk Concert Tracker - Spring Boot Edition
 
-Python version of the ESP32 Tiny Desk tracker, designed for Raspberry Pi 5 with `.env` configuration.
+A modern Spring Boot application for tracking NPR Tiny Desk concert view counts over time, with historical analytics and a beautiful web interface.
 
 ## Features
 
 - 🎵 Tracks top 100 Tiny Desk concerts by view count
 - 📊 Stores historical view count data with timestamps
-- 🌐 Beautiful Flask web interface
-- ⏰ Automatic updates every 6 hours (configurable)
-- 🕐 GMT timestamps
-- 💾 SQLite database storage (fast, reliable, in-memory caching)
-- ⚙️ Simple `.env` file configuration
-- 🍓 Optimized for Raspberry Pi 5
+- 🌐 Beautiful web interface with Thymeleaf templates
+- ⏰ Automatic updates via Spring Scheduler (configurable cron)
+- 📈 Real-time analytics and trending metrics
+- 💾 SQLite or PostgreSQL database support
+- 🔒 Distributed locking for multiple instances
+- 🐳 Docker and Docker Compose ready
+- ⚙️ Easy configuration via environment variables or application.yml
+
+## Technology Stack
+
+- **Java 17**
+- **Spring Boot 3.2**
+- **Spring MVC** for REST APIs
+- **Thymeleaf** for server-side templating
+- **Spring Data JPA** with Hibernate
+- **SQLite** (default) or **PostgreSQL**
+- **Gradle** for build management
 
 ## Requirements
 
-- Raspberry Pi 5 (or any system with Python 3.8+)
-- Python 3.8 or higher
+- Java 17 or higher
 - YouTube Data API v3 key (free from Google)
+- Docker (optional)
 
-## Installation
+## Quick Start
 
-Choose either **Docker** (recommended) or **Python** installation:
+### Option A: Docker (Recommended)
 
-### Option A: Docker Installation (Recommended)
-
-#### Quick Start with Docker Compose
-
-1. **Clone and configure:**
+1. **Configure environment:**
 ```bash
-cd /home/jorjazo/dev/priv/rpi-tinytracker
 cp .env.example .env
 nano .env  # Add your YouTube API key
 ```
 
-2. **Run with docker-compose:**
+2. **Run with Docker Compose:**
 ```bash
 docker-compose up -d
 ```
 
 3. **Access:**
-- Web Interface: `http://localhost:5000`
-- Dashboard: `http://localhost:5000/dashboard`
+- Web Interface: http://localhost:5000
+- Dashboard: http://localhost:5000/dashboard
+- History: http://localhost:5000/history
 
-#### Cross-Build for Raspberry Pi (from AMD64)
+### Option B: Run Locally with Gradle
 
+1. **Get YouTube API Key:**
+   - Visit https://console.cloud.google.com/
+   - Create a new project
+   - Enable "YouTube Data API v3"
+   - Create credentials → API Key
+
+2. **Configure:**
 ```bash
-# Build ARM64 image on AMD64 machine
-./build-arm64.sh
-
-# Export image
-docker save tinydesk-tracker:latest | gzip > tinydesk-tracker-arm64.tar.gz
-
-# Transfer to Raspberry Pi
-scp tinydesk-tracker-arm64.tar.gz pi@raspberrypi:~/
-
-# On Raspberry Pi: Load and run
-gunzip -c tinydesk-tracker-arm64.tar.gz | docker load
-docker-compose up -d
-```
-
-#### Using Makefile
-
-```bash
-make -f Makefile.docker build-arm64  # Build for ARM64
-make -f Makefile.docker save         # Save to file
-make -f Makefile.docker run          # Run with docker-compose
-make -f Makefile.docker logs         # View logs
-make -f Makefile.docker stop         # Stop container
-```
-
-### Option B: Python Installation
-
-### 1. Get YouTube API Key
-
-1. Visit https://console.cloud.google.com/
-2. Create a new project
-3. Enable "YouTube Data API v3"
-4. Create credentials → API Key
-5. Copy the API key
-
-### 2. Clone and Setup
-
-```bash
-cd /home/jorjazo/dev/priv/rpi-tinytracker
-
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### 3. Configure
-
-```bash
-# Copy example env file
 cp .env.example .env
-
-# Edit with your settings
-nano .env
+nano .env  # Add your YouTube API key
 ```
 
-Add your YouTube API key:
-```env
-YOUTUBE_API_KEY=your_actual_api_key_here
-NPR_MUSIC_CHANNEL_ID=UC4eYXhJI4-7wSWc8UNRwD4A
-DB_FILE=./data/tinydesk.db
-UPDATE_INTERVAL_HOURS=6
-```
-
-### 4. Run
-
+3. **Run:**
 ```bash
-python3 -m tinydesk_tracker
+./gradlew bootRun
 ```
 
-Or:
+Or build and run the JAR:
 ```bash
-./start.sh
+./gradlew bootJar
+java -jar build/libs/tinydesk-tracker-2.0.0.jar
 ```
 
-## Usage
+## Configuration
 
-### Access Web Interface
+### Environment Variables
 
-- Local: `http://localhost:5000/`
-- Network: `http://<raspberry-pi-ip>:5000/`
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `YOUTUBE_API_KEY` | Required | Your YouTube Data API v3 key |
+| `NPR_MUSIC_CHANNEL_ID` | `UC4eYXhJI4-7wSWc8UNRwD4A` | NPR Music channel ID |
+| `TINY_DESK_PLAYLIST_ID` | `PL1B627337ED6F55F0` | Tiny Desk playlist ID |
+| `DATABASE_URL` | `jdbc:sqlite:./data/tinydesk.db` | Database connection URL |
+| `UPDATE_CRON` | `0 */30 * * * *` | Cron expression (every 30 min) |
+| `UPDATE_INTERVAL_HOURS` | `6` | Fallback update interval |
+| `SCHEDULER_ENABLED` | `true` | Enable/disable scheduled updates |
+| `MAX_RESULTS_PER_REQUEST` | `50` | YouTube API page size |
 
-### API Endpoints
+### Using PostgreSQL
 
-- `GET /api/top` - Get top 100 videos sorted by views
-- `GET /api/data` - Get raw historical data (backward compatible)
-- `GET /api/status` - Get system status and database stats
-- `GET /api/history/<video_id>` - Get view history for specific video
+Update your `.env` file:
+```bash
+DATABASE_URL=jdbc:postgresql://localhost:5432/tinydesk
+DATABASE_DRIVER=org.postgresql.Driver
+DATABASE_USERNAME=tinydesk
+DATABASE_PASSWORD=yourpassword
+HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+```
 
-### Example API Response
+## API Endpoints
+
+### Main Endpoints
+- `GET /` - Main page with top 100 videos
+- `GET /dashboard` - Analytics dashboard
+- `GET /history` - Ranking history page
+
+### REST API
+- `GET /api/top` - Get top 100 videos with metadata
+- `GET /api/data` - Get raw historical data
+- `GET /api/status` - System status and database stats
+- `GET /api/history/{videoId}` - View history for specific video
+- `GET /api/ranking-history` - Get ranking evolution over time
+- `GET /api/analytics` - Get trending and performance analytics
+- `POST /api/update` - Trigger manual update
+- `POST /api/add-video/{videoId}` - Add specific video to tracker
+
+### Example Response
 
 ```json
 {
@@ -146,23 +128,133 @@ Or:
       "videoId": "vWwgrjjIMXA",
       "title": "Tyler, The Creator: NPR Music Tiny Desk Concert",
       "views": 12500000,
+      "publishedAt": "2017-12-27T19:00:01Z",
       "url": "https://www.youtube.com/watch?v=vWwgrjjIMXA"
     }
   ],
   "lastUpdate": 1698768000,
+  "nextUpdate": 1698789600,
   "total": 100
 }
 ```
 
-## Run as Service (systemd)
+## Building
 
-Create a systemd service to run on boot:
-
+### Build JAR
 ```bash
-sudo nano /etc/systemd/system/tinydesk-tracker.service
+./gradlew bootJar
 ```
 
-Add:
+### Build Docker Image
+```bash
+docker build -t tinydesk-tracker:latest .
+```
+
+### Build for ARM64 (Raspberry Pi)
+```bash
+docker buildx build --platform linux/arm64 -t tinydesk-tracker:arm64 .
+```
+
+## Development
+
+### Run Tests
+```bash
+./gradlew test
+```
+
+### Run with Hot Reload
+```bash
+./gradlew bootRun
+```
+
+### Code Structure
+```
+src/main/java/com/tinydesk/tracker/
+├── TinyDeskTrackerApplication.java   # Main application class
+├── config/                            # Configuration classes
+│   ├── AppConfig.java
+│   └── WebConfig.java
+├── controller/                        # MVC Controllers
+│   ├── WebController.java            # Page routes
+│   └── ApiController.java            # REST API
+├── entity/                            # JPA Entities
+│   ├── Video.java
+│   ├── History.java
+│   ├── Metadata.java
+│   └── Lock.java
+├── repository/                        # Spring Data repositories
+│   ├── VideoRepository.java
+│   ├── HistoryRepository.java
+│   ├── MetadataRepository.java
+│   └── LockRepository.java
+├── service/                           # Business logic
+│   ├── YouTubeService.java
+│   ├── DatabaseService.java
+│   ├── TinyDeskTrackerService.java
+│   └── SchedulerService.java
+└── dto/                               # Data Transfer Objects
+    ├── YouTubePlaylistResponse.java
+    └── YouTubeVideoResponse.java
+
+src/main/resources/
+├── application.yml                    # Application configuration
+└── templates/                         # Thymeleaf templates
+    ├── index.html
+    ├── dashboard.html
+    └── history.html
+```
+
+## Database Schema
+
+### Tables
+
+**videos** - Main video information
+```sql
+CREATE TABLE videos (
+    video_id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    current_views INTEGER NOT NULL DEFAULT 0,
+    last_updated INTEGER NOT NULL,
+    published_at TEXT
+);
+```
+
+**history** - Historical view count data
+```sql
+CREATE TABLE history (
+    id BIGSERIAL PRIMARY KEY,
+    video_id TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    view_count INTEGER NOT NULL,
+    FOREIGN KEY (video_id) REFERENCES videos(video_id)
+);
+CREATE INDEX idx_history_video_id ON history(video_id);
+CREATE INDEX idx_history_timestamp ON history(timestamp);
+```
+
+**metadata** - System metadata
+```sql
+CREATE TABLE metadata (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+```
+
+**locks** - Distributed locking
+```sql
+CREATE TABLE locks (
+    key TEXT PRIMARY KEY,
+    owner TEXT NOT NULL,
+    expires_at INTEGER NOT NULL
+);
+```
+
+## Deployment
+
+### Systemd Service
+
+Create `/etc/systemd/system/tinydesk-tracker.service`:
+
 ```ini
 [Unit]
 Description=YouTube Tiny Desk Concert Tracker
@@ -170,10 +262,10 @@ After=network.target
 
 [Service]
 Type=simple
-User=pi
-WorkingDirectory=/home/jorjazo/dev/priv/rpi-tinytracker
-Environment="PATH=/home/jorjazo/dev/priv/rpi-tinytracker/venv/bin"
-ExecStart=/home/jorjazo/dev/priv/rpi-tinytracker/venv/bin/python3 -m tinydesk_tracker
+User=tinydesk
+WorkingDirectory=/opt/tinydesk-tracker
+Environment="YOUTUBE_API_KEY=your_key_here"
+ExecStart=/usr/bin/java -jar /opt/tinydesk-tracker/tinydesk-tracker-2.0.0.jar
 Restart=always
 RestartSec=10
 
@@ -186,172 +278,130 @@ Enable and start:
 sudo systemctl daemon-reload
 sudo systemctl enable tinydesk-tracker
 sudo systemctl start tinydesk-tracker
+```
 
-# Check status
-sudo systemctl status tinydesk-tracker
+### Docker Compose Production
 
-# View logs
+```yaml
+version: '3.8'
+services:
+  tinydesk-tracker:
+    image: tinydesk-tracker:latest
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/tinydesk
+      DATABASE_USERNAME: tinydesk
+      DATABASE_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: tinydesk
+      POSTGRES_USER: tinydesk
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
+```
+
+## Performance
+
+- **Automatic history cleanup**: Keeps last 100 entries per video
+- **Connection pooling**: Managed by Spring Boot
+- **Distributed locking**: Prevents duplicate updates in multi-instance deployments
+- **Efficient queries**: Indexed on video_id and timestamp
+- **Lazy loading**: JPA relationships loaded on demand
+
+## Monitoring
+
+### Health Check
+```bash
+curl http://localhost:5000/api/status
+```
+
+### View Logs
+```bash
+# Docker
+docker-compose logs -f
+
+# Systemd
 sudo journalctl -u tinydesk-tracker -f
-```
-
-## Configuration Options
-
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `YOUTUBE_API_KEY` | Required | Your YouTube Data API v3 key |
-| `NPR_MUSIC_CHANNEL_ID` | `UC4eYXhJI4-7wSWc8UNRwD4A` | NPR Music channel ID |
-| `DB_FILE` | `./data/tinydesk.db` | Path to SQLite database file |
-| `UPDATE_INTERVAL_HOURS` | `6` | Hours between updates |
-
-## Data Storage
-
-Data is stored in SQLite database at `./data/tinydesk.db` with the following schema:
-
-### Database Schema
-
-**videos** - Main video information
-- `video_id` (TEXT PRIMARY KEY) - YouTube video ID
-- `title` (TEXT) - Video title
-- `current_views` (INTEGER) - Current view count
-- `last_updated` (INTEGER) - Unix timestamp of last update
-
-**history** - Historical view count data
-- `id` (INTEGER PRIMARY KEY) - Auto-increment ID
-- `video_id` (TEXT) - Foreign key to videos table
-- `timestamp` (INTEGER) - Unix timestamp of data point
-- `view_count` (INTEGER) - View count at that timestamp
-
-**metadata** - System metadata
-- `key` (TEXT PRIMARY KEY) - Metadata key
-- `value` (TEXT) - Metadata value
-
-### Performance Features
-- **WAL mode** for better concurrency
-- **10MB cache** for faster queries
-- **Automatic indexing** on video_id and timestamp
-- **In-memory temp storage** for operations
-- **History limited** to 100 entries per video
-
-## Development
-
-### Run in Debug Mode
-
-```python
-# Edit tinydesk_tracker/__main__.py, change:
-app.run(host="0.0.0.0", port=5000, debug=True)
-```
-
-### Manual Update
-
-```python
-from tinydesk_tracker import TinyDeskTracker
-
-tracker = TinyDeskTracker()
-tracker.update()
 ```
 
 ## Troubleshooting
 
 ### API Key Issues
-- Verify key in `.env` file
-- Check YouTube Data API is enabled
-- Check API quota in Google Cloud Console
+- Verify key in `.env` or environment variables
+- Check YouTube Data API is enabled in Google Cloud Console
+- Check API quota usage
 
-### Permission Errors
+### Database Issues
 ```bash
-python3 -m tinydesk_tracker
-mkdir -p data
-chmod 755 data
+# Check database file permissions
+ls -la data/tinydesk.db
+
+# For PostgreSQL, check connection
+psql -h localhost -U tinydesk -d tinydesk
 ```
 
 ### Port Already in Use
 ```bash
-# Change port in code or kill existing process
-sudo lsof -i :5000
-sudo kill -9 <PID>
+# Find process using port 5000
+lsof -i :5000
+# or
+netstat -tlnp | grep 5000
 ```
 
-## Comparison: Raspberry Pi vs ESP32-C3
+## Migration from Python Version
 
-| Feature | Raspberry Pi 5 | ESP32-C3 |
-|---------|---------------|----------|
-| Language | Python | C++ |
-| Configuration | .env file | Serial commands |
-| Memory | 8GB RAM | 320KB RAM |
-| Batch Size | 50 videos | 10 videos |
-| Web Server | Flask | AsyncWebServer |
-| Storage | SQLite database | LittleFS |
-| Updates | schedule library | Timer interrupts |
-| Query Speed | Very fast (indexed) | Fast (linear) |
+The Spring Boot version maintains backward compatibility with the Python version's database schema and API endpoints. You can:
+
+1. Copy your existing `data/tinydesk.db` SQLite file
+2. Update environment variables to match the new format
+3. Run the Spring Boot version - it will use the existing data
+
+## Comparison: Spring Boot vs Python/Flask
+
+| Feature | Spring Boot | Python/Flask |
+|---------|-------------|--------------|
+| Language | Java 17 | Python 3.8+ |
+| Framework | Spring Boot 3.2 | Flask 3.0 |
+| Template Engine | Thymeleaf | Jinja2 |
+| ORM | Spring Data JPA | SQLAlchemy |
+| Configuration | YAML/Properties | .env file |
+| Scheduling | @Scheduled | schedule library |
+| Memory | ~150MB | ~50MB |
+| Startup | ~5 seconds | ~1 second |
+| Performance | High (JVM) | Medium (interpreted) |
+| Type Safety | Strong | Dynamic |
 
 ## License
 
-Same as ESP32 version
+Same as original Python version
 
 ## Acknowledgments
 
-- NPR Music for Tiny Desk Concert series
+- NPR Music for the Tiny Desk Concert series
 - YouTube Data API v3
-- Flask and Python community
+- Spring Boot and Java ecosystem
 
-## Docker Commands Reference
+## Contributing
 
-### Build Commands
-```bash
-# Build for current architecture
-docker build -t tinydesk-tracker .
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-# Build for ARM64 (Raspberry Pi) from AMD64
-./build-arm64.sh
+## API Quota
 
-# Build for multiple architectures
-docker buildx build --platform linux/amd64,linux/arm64 -t tinydesk-tracker .
-```
-
-### Run Commands
-```bash
-# Run with docker-compose (recommended)
-docker-compose up -d
-
-# Run directly
-docker run -d \
-  -p 5000:5000 \
-  --env-file .env \
-  -v $(pwd)/data:/app/data \
-  --name tinydesk-tracker \
-  tinydesk-tracker:latest
-
-# View logs
-docker-compose logs -f
-# or
-docker logs -f tinydesk-tracker
-
-# Stop
-docker-compose down
-# or
-docker stop tinydesk-tracker
-```
-
-### Maintenance
-```bash
-# Update and restart
-docker-compose pull
-docker-compose up -d
-
-# Backup database
-docker cp tinydesk-tracker:/app/data/tinydesk.db ./backup-$(date +%Y%m%d).db
-
-# Access container shell
-docker exec -it tinydesk-tracker bash
-```
-
-## Notes
-
-- Free API tier: 10,000 quota units/day
+- Free tier: 10,000 quota units/day
 - This tracker uses ~6 units per update
-- ~24 units per day = well within free quota
-- Historical data limited to 100 entries per video
-- Docker image size: ~150MB (Python slim base)
-
+- Default cron (every 30 min) = ~288 units/day
+- Well within free quota limits

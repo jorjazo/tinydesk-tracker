@@ -1,58 +1,66 @@
-services:
-  db:
-    image: postgres:16-alpine
-    container_name: tinydesk-postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB:-tinydesk}
-      - POSTGRES_USER=${POSTGRES_USER:-tinydesk}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tinydesk}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+version: '3.8'
 
+services:
   tinydesk-tracker:
     build: .
-    deploy:
-      replicas: ${TRACKER_REPLICAS:-1}
-    #container_name: tinydesk-tracker
-    restart: unless-stopped
+    image: tinydesk-tracker:latest
+    container_name: tinydesk-tracker
     ports:
       - "5000:5000"
-    volumes:
-      # Persist database
-      - ./data:/app/data
     environment:
       # YouTube API Configuration
-      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
-      - NPR_MUSIC_CHANNEL_ID=${NPR_MUSIC_CHANNEL_ID:-UC4eYXhJI4-7wSWc8UNRwD4A}
-      - DB_FILE=/app/data/tinydesk.db
-      # Use Postgres in this deployment
-      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-tinydesk}:${POSTGRES_PASSWORD:-tinydesk}@db:5432/${POSTGRES_DB:-tinydesk}
-      - UPDATE_INTERVAL_HOURS=${UPDATE_INTERVAL_HOURS:-0.5}
-      # Optionally use cron or schedule
-      - UPDATE_CRON=${UPDATE_CRON}
-      - UPDATE_SCHEDULE=${UPDATE_SCHEDULE}
-      - UPDATE_LOCK_TTL_SECONDS=${UPDATE_LOCK_TTL_SECONDS:-7200}
-    env_file:
-      - .env
-    depends_on:
-      db:
-        condition: service_healthy
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
+      NPR_MUSIC_CHANNEL_ID: ${NPR_MUSIC_CHANNEL_ID:-UC4eYXhJI4-7wSWc8UNRwD4A}
+      TINY_DESK_PLAYLIST_ID: ${TINY_DESK_PLAYLIST_ID:-PL1B627337ED6F55F0}
+      
+      # Database Configuration (SQLite by default)
+      DATABASE_URL: ${DATABASE_URL:-jdbc:sqlite:/app/data/tinydesk.db}
+      DATABASE_DRIVER: ${DATABASE_DRIVER:-org.sqlite.JDBC}
+      HIBERNATE_DIALECT: ${HIBERNATE_DIALECT:-org.hibernate.community.dialect.SQLiteDialect}
+      
+      # Scheduler Configuration
+      UPDATE_INTERVAL_HOURS: ${UPDATE_INTERVAL_HOURS:-6}
+      UPDATE_CRON: ${UPDATE_CRON:-0 */30 * * * *}
+      SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-true}
+      
+      # API Configuration
+      MAX_RESULTS_PER_REQUEST: ${MAX_RESULTS_PER_REQUEST:-50}
+      TOTAL_VIDEOS_TO_FETCH: ${TOTAL_VIDEOS_TO_FETCH:-1000}
+      UPDATE_LOCK_TTL_SECONDS: ${UPDATE_LOCK_TTL_SECONDS:-7200}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python3", "-c", "import requests; requests.get('http://localhost:5000/api/status')"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/api/status"]
       interval: 30s
-      timeout: 10s
+      timeout: 3s
       retries: 3
-      start_period: 10s
+      start_period: 40s
 
+# Optional: PostgreSQL database service
+# Uncomment to use PostgreSQL instead of SQLite
+#  postgres:
+#    image: postgres:16-alpine
+#    container_name: tinydesk-postgres
+#    environment:
+#      POSTGRES_DB: tinydesk
+#      POSTGRES_USER: tinydesk
+#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+#    volumes:
+#      - postgres-data:/var/lib/postgresql/data
+#    restart: unless-stopped
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U tinydesk"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#
+# Then update tinydesk-tracker environment:
+#      DATABASE_URL: jdbc:postgresql://postgres:5432/tinydesk
+#      DATABASE_DRIVER: org.postgresql.Driver
+#      DATABASE_USERNAME: tinydesk
+#      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+#      HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
 
-volumes:
-  postgres-data:
-
-
+#volumes:
+#  postgres-data:
